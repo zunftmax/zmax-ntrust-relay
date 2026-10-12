@@ -1,0 +1,24 @@
+[Unit]
+Description=Verify the confidential CPU TEE and optional NVIDIA GPU data path
+Requires=systemd-time-wait-sync.service
+Wants=network-online.target time-sync.target nvidia-persistenced.service
+After=network-online.target time-sync.target systemd-time-wait-sync.service nvidia-persistenced.service
+Before=ntrust-origin.service
+
+[Service]
+Type=oneshot
+RuntimeDirectory=ntrust-tee
+RuntimeDirectoryMode=0700
+RuntimeDirectoryPreserve=yes
+WorkingDirectory=/run/ntrust-tee
+Environment=HOME=/run/ntrust-tee
+Environment=TMPDIR=/run/ntrust-tee
+ExecStart=/usr/local/lib/ntrust/tee-ready
+RemainAfterExit=yes
+TimeoutStartSec=180
+LimitCORE=0
+UMask=0077
+ProtectSystem=strict
+ProtectHome=yes
+NoNewPrivileges=yes
+TemporaryFileSystem=/tmp:rw,nosuid,nodev,noexec,mode=1777 /var/tmp:rw,nosuid,nodev,noexec,mode=1777

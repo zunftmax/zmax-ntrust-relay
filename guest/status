@@ -1,0 +1,12 @@
+#!/bin/sh
+set -eu
+# Deliberately print only fixed stage names and systemd state, never app logs.
+for service in systemd-time-wait-sync ntrust-tee ntrust-origin ntrust-https; do
+    printf '%s: ' "$service"
+    systemctl show --property=ActiveState --value "$service.service"
+done
+if python3 -c 'import socket; socket.create_connection(("127.0.0.1", 8081), timeout=2).close()'; then
+    echo 'origin: ready'
+else
+    echo 'origin: unavailable'
+fi

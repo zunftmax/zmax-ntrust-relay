@@ -1,0 +1,42 @@
+#!/bin/sh
+set -eu
+# Open the relay tunnel from the developer-owned machine to the TEE guest.
+#
+# Direction: this machine dials outbound SSH to the relay over the operator's
+# existing admin channel and publishes the local engine at the relay's
+# loopback listener (127.0.0.1:8081). No inbound port is opened here, which
+# keeps the developer machine reachable-behind-NAT friendly.
+#
+# Plaintext requests exist only inside TEE RAM and on this trusted machine.
+# The tunnel itself is SSH-encrypted; the cloud host observes metadata only.
+usage() {
+    cat <<'EOF'
+usage: ntrust-tunnel [-l local_port] [-r remote_port] destination
+
+  -l local_port   local engine address port (default: 8000)
+  -r remote_port  relay loopback listener port (default: 8081 for 127.0.0.1:8081, must match relay)
+  destination     SSH destination of the relay, e.g. operator@relay.example.com
+
+environment:
+  NTRUST_LOCAL_PORT   same as -l
+  NTRUST_REMOTE_PORT  same as -r
+EOF
+}
+local_port="${NTRUST_LOCAL_PORT:-8000}"
+remote_port="${NTRUST_REMOTE_PORT:-8081}"
+while getopts 'l:r:h' flag; do
+    case "$flag" in
+        l) local_port="$OPTARG" ;;
+        r) remote_port="$OPTARG" ;;
+        h) usage; exit 0 ;;
+        *) usage >&2; exit 2 ;;
+    esac
+done
+shift $((OPTIND - 1))
+if [ "$#" -ne 1 ]; then usage >&2; exit 2; fi
+case "$local_port $remote_port" in
+    *[!0-9]*|*" "*[!0-9]*|*[!0-9]*" "*) echo 'Ports must be decimal numbers.' >&2; exit 2 ;;
+esac
+exec ssh -N -T -o BatchMode=yes -o ExitOnForwardFailure=yes \
+    -o ServerAliveInterval=15 -o ServerAliveCountMax=3 \
+    -R "$remote_port:127.0.0.1:$local_port" "$1"

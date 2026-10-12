@@ -1,0 +1,44 @@
+[Unit]
+Description=Wait for the developer-local origin tunnel
+BindsTo=ntrust-tee.service
+After=ntrust-tee.service
+ConditionPathExists=/etc/ntrust/runtime.env
+
+[Service]
+Type=oneshot
+User=ntrust
+Group=ntrust
+Environment=HOME=/run/ntrust-origin
+Environment=TMPDIR=/run/ntrust-origin
+RuntimeDirectory=ntrust-origin
+RuntimeDirectoryMode=0700
+ExecStart=/usr/local/lib/ntrust/origin-ready
+RemainAfterExit=yes
+TimeoutStartSec=300
+LimitCORE=0
+MemorySwapMax=0
+MemoryMax=64M
+TasksMax=16
+CapabilityBoundingSet=
+NoNewPrivileges=yes
+ProtectKernelTunables=yes
+ProtectKernelModules=yes
+ProtectControlGroups=yes
+RestrictSUIDSGID=yes
+RestrictNamespaces=yes
+LockPersonality=yes
+SystemCallFilter=~@mount @module @raw-io @reboot @swap @debug @obsolete bpf keyctl add_key request_key
+SystemCallErrorNumber=EPERM
+ProtectSystem=strict
+ProtectHome=yes
+TemporaryFileSystem=/tmp:rw,nosuid,nodev,noexec,mode=1777 /var/tmp:rw,nosuid,nodev,noexec,mode=1777
+PrivateMounts=yes
+RestrictAddressFamilies=AF_UNIX AF_INET
+IPAddressDeny=any
+IPAddressAllow=localhost
+UMask=0077
+StandardOutput=null
+StandardError=null
+
+[Install]
+WantedBy=multi-user.target
