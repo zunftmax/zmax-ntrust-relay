@@ -42,7 +42,7 @@ class OsHardeningTests(unittest.TestCase):
         for name in ("ntrust-origin.service", "ntrust-https.service"):
             unit = (ROOT / "guest" / "systemd" / name).read_text()
             self.assertIn("MemoryDenyWriteExecute=yes", unit)
-        for name in ("ntrust-tee.service", "ntrust-origin.service", "ntrust-https.service"):
+        for name in ("ntrust-tee.service", "ntrust-attest.service", "ntrust-origin.service", "ntrust-https.service"):
             unit = (ROOT / "guest" / "systemd" / name).read_text()
             for directive in (
                 "NoNewPrivileges=yes",

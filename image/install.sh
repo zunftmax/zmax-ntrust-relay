@@ -66,7 +66,7 @@ install -d /usr/share/doc/ntrust
 id -u ntrust >/dev/null 2>&1 || useradd --system --home-dir /nonexistent --shell /usr/sbin/nologin ntrust
 id -u ntrust-web >/dev/null 2>&1 || useradd --system --home-dir /nonexistent --shell /usr/sbin/nologin ntrust-web
 install -d -m 0755 /usr/local/lib/ntrust /etc/ntrust
-install -m 0755 guest/tee-ready guest/https-start guest/origin-ready /usr/local/lib/ntrust/
+install -m 0755 guest/tee-ready guest/https-start guest/origin-ready guest/attest-server /usr/local/lib/ntrust/
 install -m 0755 guest/status /usr/local/bin/ntrust-status
 install -m 0644 guest/nginx.conf.template guest/runtime.env.example /etc/ntrust/
 install -m 0644 guest/systemd/*.service /etc/systemd/system/
@@ -148,7 +148,7 @@ EOF
 install -d /etc/systemd/journald.conf.d
 printf '[Journal]\nStorage=volatile\nRuntimeMaxUse=32M\nForwardToSyslog=no\n' > /etc/systemd/journald.conf.d/ntrust.conf
 systemctl enable systemd-resolved.service systemd-timesyncd.service
-systemctl enable ntrust-origin.service ntrust-https.service
+systemctl enable ntrust-attest.service ntrust-origin.service ntrust-https.service
 
 # Exercise installed CPU-side binaries/configuration during the Linux build.
 # This deliberately does not bypass the GPU gate or claim GPU execution.
