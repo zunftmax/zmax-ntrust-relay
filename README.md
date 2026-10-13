@@ -127,3 +127,5 @@ production issuance limits.
 Project code uses the MIT license. NVIDIA components, NGINX and Ubuntu retain
 their own licenses. Installed license files and package metadata are retained
 in the image.
+
+Rust attestation source migration and exact release-pin requirements are described in [ATTESTATION.md](ATTESTATION.md). The new responder is not enabled by image installation; hardware acceptance remains pending.
