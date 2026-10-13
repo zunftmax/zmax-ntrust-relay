@@ -8,7 +8,7 @@ This directory holds the code that runs on the client and developer machine:
 
 ## 1. Ntrust Python SDK
 
-The SDK supports OpenAI-compatible API endpoints with hardware attestation verification, zero-leakage session binding, and zero external runtime dependencies.
+The SDK supports OpenAI-compatible API endpoints with hardware attestation verification, zero-leakage session binding, and no third-party Python runtime dependencies. Attestation requires a separately installed, independently trusted Rust `uq` executable and explicit policy.
 
 ### Installation
 
@@ -61,3 +61,37 @@ Smoke-test through the relay once the tunnel is up:
 curl --fail -s "https://$DOMAIN/v1/models" \
   -H "Authorization: Bearer $NTRUST_API_KEY" | head -c 400
 ```
+
+
+Attestation checks fail before connecting if the trusted binary or independent
+policy is missing. The SDK no longer returns an accepting structural-only
+receipt verdict. `verify_attestation=True` and `ntrust chat --attest` require
+these same inputs; the CLI chat command accepts the attestation policy options.
+Hardware and end-to-end acceptance remain pending; mocked adapter tests do not
+establish confidential hardware compatibility.
+
+Optional local parameters are `boot_policy`, `uki`, `google_boot_verifier` and
+`prior_stage_policy` (matching CLI flags use hyphens). The Google helper must be
+an absolute path to a nonempty regular executable and requires `boot_policy`.
+It selects measured-boot replay, not CPU verification. Prior-stage policy is a
+nonempty local JSON file bounded to 1 MiB. None of these paths or file contents
+is uploaded. See [../ATTESTATION.md](../ATTESTATION.md) for runtime-log collection
+and the optional companion release-pin proposal.
+
+
+Attested SDK requests now perform a fresh challenge and Rust appraisal before
+**every** model query, inference request, and streaming request. The SDK then
+checks the actual request connection's certificate SPKI against the key observed
+by the attestation transport, before sending any HTTP headers, API key, or body.
+Every reconnection repeats the key check. A verified result must be used within
+30 seconds; expired results and failed refreshes reject the request. A completed
+response stream stays on its checked TLS connection and does not require a new
+appraisal for each received chunk.
+
+Calling `verify_attestation()` enables this requirement for subsequent requests,
+even when that first check fails. `attestation_verdict` reports the latest
+successful check and is never a cached authorization for later traffic. The
+default mode with no attestation requested remains explicitly unverified.
+Certificate-authority and hostname checks still apply. This establishes request
+TLS-key continuity with the fresh attestation; it does not establish physical
+CPU/GPU attachment or attest a relay's remote inference origin.
